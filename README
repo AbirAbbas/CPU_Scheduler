@@ -1,0 +1,128 @@
+****************************************************
+Abir Abbas         						     0955448
+CIS3110 - Assignment 2
+2018-02-26                        abbasa@uoguelph.ca
+****************************************************
+
+************
+Compilation
+************
+make - compiles all required files
+
+***********************
+Running the program(s)
+***********************
+./bin/program (flags)
+
+flags : 
+enter your desired command to start CPU simulation :
+
+simcpu - starts command (required)
+
+> fileName - indicates file input (required)
+
+-d - descriptive mode (optional)
+
+-v - verbose mode (optional)
+
+-r quantum - round robin mode (optional)
+
+*****************
+References
+*****************
+The LinkedList library provided to us from the course CIS2750 by Dennis Nikitenko was used as my
+required data structure.
+
+*****************
+Limitations
+*****************
+- The reason my outputs are low is because most of the testcases use high amounts of IO
+since my method assumes IO is done in the background, it isn't counted as CPU state running
+therefore there is a lot of idle time even for FCFS.
+- input file must be in format provided by the prof in the assignment guidelines
+- Unfortunately it ends up not recording the exit time for the last thread in the queue
+	- For Example : Process 1 has 3 Threads, if Thread 3 is the last one to exit, it will have the wrong exit time
+	- This does not effect the overall turnaround time because that is calculate during real-time
+	- Most likely caused by me not saving the exit time into the structs properly or uninitialized values issue!
+
+*****************
+Assumptions
+*****************
+- I will strictly be following the method the prof states within his assignment/lab4 guidelines
+- It is assumed that all cpu bursts and IO bursts within a thread can be added up and assumed that
+they arrived at the same time and left at the same time
+- It is assumed that IO will be done in the background and will not cause CPU to go into ready state
+- It is assumed exit Bursts will cause the CPU to go into running state
+- It is assumed that once an exit burst is completed the thread is completely done
+- It is assumed that the input format is going to be proper
+- It is assumed that once a program goes into IO it is blocked and left in the background
+- It is assumed that you may proceed to the next process if IO blocking has occured
+- It is assumed that every time a process switch or a thread switch occurs, the timers will be incremented accordingly
+
+*****************
+Questions
+*****************
+i.) Yes it does because i assume that it takes time to load in a thraed/process onto the processor so it may
+do its job, even if there is nothing currently in the processor, the thread/process would need to be prepared
+and ready to be worked on which does require some overhead.
+
+ii.) Yes it does because for the same reason for the previous question, it would take some time to load a
+process or a thread into the processor despite it being idle. 
+
+iii.) No because it is not switching from 1 thread to another, and since his assignment guidelines does state
+that IO transitions have no overhead involved and the queue is empty we don't need to account for any overheards.
+
+iv.) Yes, every time round robin interrupts a thread, it adds an overhead, this is mainly because it is switching
+from one thread to another to be worked on, and this does take some time/preparation so that the processor may
+start working on the required thread. 
+
+*****************
+Algorithm
+*****************
+
+FCFS : 
+
+All threads/processes are sorted into a struct by arrival time and process number. 
+New -> Ready for each cpu/thread
+First thread is taken and all the information is processed
+Ready -> Running
+CPU -> Running
+No other job is taken untill CPU is done its job and it is idle.
+Any job arriving at the time CPU is running, is sent back into the que with a new time
+New Time for next job = finished Time (the time first job will finish) + currentTime
+CPU finishes its job.
+CPU -> Idle
+Now the process will likely require IO
+Running -> Blocked (IO)
+The thread is now blocked in the background for IO and a new arrival time is set when IO is done
+CPU is still idle
+Next job is taken and previous steps are repeated.
+
+When IO is complete : 
+
+When IO is complete the arrival time will be somewhere in between the process of other jobs,
+the other jobs will be halted and an exit CPU burst event will be created and prioritized
+CPU will enter running state
+Exit burst will be executed
+The thread will completely be removed from the queue
+CPU will be back to idle and continue on from the next job.
+
+
+Round Robin : (States are similar to that of FCFS)
+
+All threads/processes are sorted into a struct by arrival time and process number. 
+New -> Ready for each cpu/thread
+First thread is taken and is going to run untill time specified by quantum
+Ready -> Running
+CPU -> Running
+if job is done block or IO otherwise, push the job at the end of the queue
+take next job and repeat previous steps
+
+if Blocking is required : 
+Block the current thread in the background and continue processing every job with quantum timing
+
+Once Blocking is done : 
+if Blocking is done create a terminate event and begin processing the event with the given quantum time
+if quantum is not enough to finish termination just send it back into the queue and finish it on the next cycle
+
+
